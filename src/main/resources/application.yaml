@@ -9,3 +9,9 @@ spring:
     name: learn-ai-code
 server:
   port: 19999
+
+logging:
+  charset:
+    console: UTF-8
+  level:
+    org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: DEBUG
