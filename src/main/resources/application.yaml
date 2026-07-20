@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: learn-ai-code
+server:
+  port: 19999
