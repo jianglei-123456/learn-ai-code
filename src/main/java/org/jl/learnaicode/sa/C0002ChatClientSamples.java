@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("sacc")
-public class ChatClientSamples {
+public class C0002ChatClientSamples {
     @Autowired
     private ChatClient.Builder chatClientBuilder;
 
