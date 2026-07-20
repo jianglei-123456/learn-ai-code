@@ -1,4 +1,10 @@
 spring:
+  ai:
+    deepseek:
+      api-key: 1
+      chat:
+        options:
+          model: deepseek-v4-flash
   application:
     name: learn-ai-code
 server:
