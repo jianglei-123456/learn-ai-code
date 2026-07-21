@@ -23,6 +23,8 @@ public class C0005LangchainBaseSamples {
         OpenAiChatModel model = OpenAiChatModel.builder()
                 .baseUrl("https://api.deepseek.com")
                 .apiKey(System.getenv("spring.ai.deepseek.api-key")).modelName(modelName)
+                .logRequests(true)
+                .logResponses(true)
                 .build();
         WeatherAgentAiService agentAiService = AiServices.builder(WeatherAgentAiService.class)
                 .chatModel(model).chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(10))
