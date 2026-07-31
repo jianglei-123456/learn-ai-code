@@ -33,3 +33,4 @@ build/
 .vscode/
 .mimocode
 report.html
+.agentscope
