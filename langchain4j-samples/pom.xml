@@ -10,9 +10,9 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>NewJava</artifactId>
-    <name>NewJava</name>
-    <description>NewJava module for learn-ai-code</description>
+    <artifactId>langchain4j-samples</artifactId>
+    <name>langchain4j-samples</name>
+    <description>LangChain4j samples module</description>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -27,9 +27,16 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc-test</artifactId>
-            <scope>test</scope>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-agentic</artifactId>
         </dependency>
     </dependencies>
 

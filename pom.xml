@@ -18,7 +18,9 @@
     <description>learn-ai-code parent project</description>
 
     <modules>
-        <module>base</module>
+        <module>spring-ai-samples</module>
+        <module>langchain4j-samples</module>
+        <module>agentscope-samples</module>
         <module>NewJava</module>
     </modules>
 

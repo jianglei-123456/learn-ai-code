@@ -10,9 +10,9 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>NewJava</artifactId>
-    <name>NewJava</name>
-    <description>NewJava module for learn-ai-code</description>
+    <artifactId>spring-ai-samples</artifactId>
+    <name>spring-ai-samples</name>
+    <description>Spring AI samples module</description>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -27,9 +27,8 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc-test</artifactId>
-            <scope>test</scope>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-deepseek</artifactId>
         </dependency>
     </dependencies>
 

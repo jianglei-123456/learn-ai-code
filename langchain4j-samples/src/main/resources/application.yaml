@@ -1,0 +1,23 @@
+spring:
+  ai:
+    deepseek:
+      api-key: 1
+      chat:
+        options:
+          model: deepseek-v4-flash
+  application:
+    name: langchain4j-samples
+server:
+  port: 19998
+
+logging:
+  charset:
+    console: UTF-8
+  level:
+    dev.langchain4j: DEBUG
+
+langchain4j:
+  open-ai:
+    chat-model:
+      log-requests: true
+      log-responses: true

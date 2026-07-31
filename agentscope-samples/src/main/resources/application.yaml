@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: agentscope-samples
+server:
+  port: 19997
+
+logging:
+  charset:
+    console: UTF-8
