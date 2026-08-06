@@ -34,3 +34,5 @@ build/
 .mimocode
 report.html
 .agentscope
+.tmp-enc-test
+.tmp-spring-src

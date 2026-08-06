@@ -22,6 +22,7 @@
         <module>langchain4j-samples</module>
         <module>agentscope-samples</module>
         <module>NewJava</module>
+        <module>common</module>
     </modules>
 
     <properties>

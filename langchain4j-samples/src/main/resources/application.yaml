@@ -7,6 +7,14 @@ spring:
           model: deepseek-v4-flash
   application:
     name: langchain4j-samples
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  mvc:
+    contentnegotiation:
+      favor-parameter: true
 server:
   port: 19998
 

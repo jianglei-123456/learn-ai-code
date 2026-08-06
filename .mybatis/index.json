@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "timestamp": 1785986537469,
+  "projectRoot": "e:\\Dev\\learn-ai-code",
+  "entries": [
+    {
+      "path": "spring-ai-samples\\target\\classes\\org\\jl\\learnaicode\\sa\\SaApplication.class",
+      "mtime": 1785986194334.0674,
+      "size": 737
+    },
+    {
+      "path": "common\\target\\classes\\org\\jl\\learnaicode\\common\\config\\CorsAutoConfiguration.class",
+      "mtime": 1785986534771.983,
+      "size": 1346
+    }
+  ]
+}

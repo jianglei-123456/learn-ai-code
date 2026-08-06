@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>流式响应测试</title>
+    <!-- SSE 解析：eventsource-parser v1.1.2（纯 ESM，经 jsdelivr +esm 转换，由下方 type=module 脚本引入） -->
+    <!-- Markdown 渲染（仅切换开启时使用） -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            background: #f7f9fc;
+            color: #1e293b;
+        }
+        h1 {
+            font-weight: 500;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: flex;
+            flex-direction: column;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #475569;
+        }
+        .form-group input {
+            margin-top: 0.25rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: #fafafa;
+            transition: border-color 0.15s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.5rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.05s;
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn-start {
+            background: #2563eb;
+            color: white;
+        }
+        .btn-start:hover { background: #1d4ed8; }
+        .btn-start:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-stop {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-stop:hover { background: #dc2626; }
+        .btn-stop:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .btn-clear {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .btn-clear:hover { background: #cbd5e1; }
+        .status {
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        .status .connected {
+            color: #16a34a;
+            font-weight: 500;
+        }
+        .status .error {
+            color: #dc2626;
+            font-weight: 500;
+        }
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .output-header .title {
+            font-weight: 500;
+        }
+        .output-header .right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        /* Markdown 渲染切换开关 */
+        .switch {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #475569;
+            user-select: none;
+        }
+        .switch input {
+            display: none;
+        }
+        .switch .track {
+            width: 36px;
+            height: 20px;
+            background: #cbd5e1;
+            border-radius: 999px;
+            position: relative;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .switch .track::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: left 0.15s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .switch input:checked + .track {
+            background: #2563eb;
+        }
+        .switch input:checked + .track::after {
+            left: 18px;
+        }
+        .counter {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        .output {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 1rem 1.2rem;
+            border-radius: 8px;
+            min-height: 200px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-top: 0.5rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .output .chunk {
+            animation: fadeIn 0.15s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0.3; }
+            to { opacity: 1; }
+        }
+        /* Markdown 渲染模式下的排版微调 */
+        .output.markdown {
+            white-space: normal;
+        }
+        .output.markdown h1,
+        .output.markdown h2,
+        .output.markdown h3,
+        .output.markdown h4 {
+            color: #f1f5f9;
+            margin: 0.6em 0 0.3em;
+            line-height: 1.3;
+        }
+        .output.markdown h1 { font-size: 1.4rem; }
+        .output.markdown h2 { font-size: 1.25rem; }
+        .output.markdown h3 { font-size: 1.1rem; }
+        .output.markdown p { margin: 0.4em 0; }
+        .output.markdown ul,
+        .output.markdown ol { margin: 0.4em 0; padding-left: 1.4em; }
+        .output.markdown code {
+            background: rgba(255,255,255,0.12);
+            padding: 0.1em 0.35em;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .output.markdown pre {
+            background: rgba(255,255,255,0.08);
+            padding: 0.75rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .output.markdown pre code {
+            background: none;
+            padding: 0;
+        }
+        .output.markdown blockquote {
+            border-left: 3px solid #475569;
+            margin: 0.4em 0;
+            padding-left: 0.8em;
+            color: #cbd5e1;
+        }
+        .output.markdown a { color: #60a5fa; }
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        .meta span {
+            background: #f1f5f9;
+            padding: 0.15rem 0.6rem;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>📡 流式响应测试</h1>
+
+<div class="card">
+    <div class="form-group">
+        <label>
+            接口地址 (URL，可含查询参数)
+            <input type="text" id="urlInput" value="http://localhost:19997/arh/harness?msg=北京天气怎么样&user=alice" placeholder="例如 /api/stream?msg=你好 或 http://localhost:8080/api/stream?text=Hello">
+        </label>
+    </div>
+    <div class="button-group">
+        <button class="btn btn-start" id="startBtn">▶ 开始流式</button>
+        <button class="btn btn-stop" id="stopBtn" disabled>⏹ 停止</button>
+        <button class="btn btn-clear" id="clearBtn">🗑 清空</button>
+    </div>
+    <div class="status" id="status">就绪</div>
+</div>
+
+<div class="card">
+    <div class="output-header">
+        <span class="title">实时输出</span>
+        <div class="right">
+            <span class="counter" id="counter">字符数: 0</span>
+            <label class="switch" title="Markdown 渲染仅供查看效果，可能存在闪烁">
+                <input type="checkbox" id="renderToggle">
+                <span class="track"></span>
+                <span>Markdown</span>
+            </label>
+        </div>
+    </div>
+    <div class="output" id="output"></div>
+    <div class="meta">
+        <span>支持 SSE (data:) 和纯文本流</span>
+        <span>SSE 解析基于 eventsource-parser</span>
+    </div>
+</div>
+
+<script type="module">
+    import { createParser } from 'https://cdn.jsdelivr.net/npm/eventsource-parser@1.1.2/+esm';
+
+    // marked 配置：GFM + 单换行转 <br>（对 AI 流式文本更友好）
+    marked.setOptions({ gfm: true, breaks: true });
+
+    // DOM 引用
+        const urlInput = document.getElementById('urlInput');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const outputDiv = document.getElementById('output');
+        const statusDiv = document.getElementById('status');
+        const counterSpan = document.getElementById('counter');
+        const renderToggle = document.getElementById('renderToggle');
+
+        let abortController = null;   // 用于取消 fetch
+        let isStreaming = false;
+        let allText = '';             // 全部累积文本（唯一数据源，供两种模式渲染）
+        let renderMode = 'text';      // 'text' | 'markdown'
+
+        // 辅助：更新状态显示
+        function setStatus(text, type = 'info') {
+            statusDiv.innerHTML = text;
+        }
+
+        // 清洗 marked 输出的 HTML，防 XSS（零依赖 DOM 白名单，避免双重转义）
+        function sanitizeHtml(html) {
+            const template = document.createElement('template');
+            template.innerHTML = html;
+            const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_ELEMENT);
+            const elements = [];
+            while (walker.nextNode()) elements.push(walker.currentNode);
+            for (const el of elements) {
+                const tag = el.tagName.toLowerCase();
+                // 移除可执行/危险元素
+                if (['script', 'iframe', 'object', 'embed', 'link', 'meta', 'style'].includes(tag)) {
+                    el.remove();
+                    continue;
+                }
+                // 移除事件属性与 javascript: 伪协议
+                for (const attr of [...el.attributes]) {
+                    const name = attr.name.toLowerCase();
+                    const val = attr.value.trim().toLowerCase();
+                    if (name.startsWith('on') ||
+                        ((name === 'href' || name === 'src' || name === 'xlink:href') && val.startsWith('javascript:'))) {
+                        el.removeAttribute(attr.name);
+                    }
+                }
+            }
+            return template.innerHTML;
+        }
+
+        // 按当前模式刷新输出区
+        function refreshOutput() {
+            if (renderMode === 'markdown') {
+                outputDiv.classList.add('markdown');
+                outputDiv.innerHTML = sanitizeHtml(marked.parse(allText));
+            } else {
+                outputDiv.classList.remove('markdown');
+                outputDiv.textContent = allText;
+            }
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+            counterSpan.textContent = `字符数: ${allText.length}`;
+        }
+
+        // 追加文本（纯文本模式用 span 增量追加，Markdown 模式整体渲染）
+        function appendText(text) {
+            if (!text) return;
+            allText += text;
+            if (renderMode === 'markdown') {
+                refreshOutput();
+            } else {
+                const span = document.createElement('span');
+                span.className = 'chunk';
+                span.textContent = text;
+                outputDiv.appendChild(span);
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+                counterSpan.textContent = `字符数: ${allText.length}`;
+            }
+        }
+
+        // 清空输出
+        function clearOutput() {
+            allText = '';
+            outputDiv.innerHTML = '';
+            counterSpan.textContent = '字符数: 0';
+        }
+
+        // 读取完整 URL，并在内部拆出 baseUrl / queryParams 两段
+        let baseUrl = '';
+        let queryParams = '';
+        function buildUrl() {
+            const url = urlInput.value.trim();
+            if (!url) return '';
+            const qIdx = url.indexOf('?');
+            if (qIdx >= 0) {
+                baseUrl = url.slice(0, qIdx);
+                queryParams = url.slice(qIdx + 1);
+            } else {
+                baseUrl = url;
+                queryParams = '';
+            }
+            return url;
+        }
+
+        // 开始流式请求
+        async function startStream() {
+            if (isStreaming) return;
+
+            const url = buildUrl();
+            if (!url) {
+                setStatus('❌ 请填写有效的接口地址', 'error');
+                return;
+            }
+
+            // 重置状态
+            clearOutput();
+            abortController = new AbortController();
+            const signal = abortController.signal;
+
+            setStatus(`🔄 连接中: ${url}`, 'info');
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            isStreaming = true;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    signal: signal,
+                    headers: {
+                        'Accept': 'text/event-stream, text/plain, */*'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status} ${response.statusText}`);
+                }
+
+                const contentType = response.headers.get('content-type') || '';
+
+                // 非流式响应（JSON 等）：整体读取一次
+                if (!contentType.includes('text/event-stream') && !contentType.includes('text/plain')) {
+                    const text = await response.text();
+                    appendText(text);
+                    setStatus('✅ 完成 (非流式响应)', 'info');
+                    stopStream();
+                    return;
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                const isSSE = contentType.includes('text/event-stream');
+
+                // SSE：使用官方 eventsource-parser 解析，正确处理
+                // data:xxx（无空格）、跨分包的行边界、一包含多帧等边界情况
+                let parser = null;
+                if (isSSE) {
+                    // v1.1.2 API：createParser 直接接收回调，事件对象带 type 字段
+                    parser = createParser((event) => {
+                        if (event.type === 'event') {
+                            appendText(event.data || '');
+                        }
+                        // type === 'reconnect-interval' 时忽略
+                    });
+                }
+
+                setStatus('🟢 已连接，接收数据中...', 'connected');
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value, { stream: true });
+                    if (isSSE) {
+                        parser.feed(chunk);
+                    } else {
+                        // 纯文本流：没有帧结构，直接追加
+                        appendText(chunk);
+                    }
+                }
+
+                // 收尾：flush 解码器残留字节
+                if (isSSE) {
+                    parser.feed(decoder.decode());
+                }
+                setStatus('✅ 流式传输结束', 'info');
+
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    setStatus('⏹ 已手动停止', 'info');
+                } else {
+                    setStatus(`❌ 错误: ${err.message}`, 'error');
+                    console.error('Stream error:', err);
+                }
+            } finally {
+                stopStream();
+            }
+        }
+
+        // 停止流式
+        function stopStream() {
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+            }
+            isStreaming = false;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            // 如果状态还是“连接中”，改为已停止
+            const statusText = statusDiv.textContent;
+            if (statusText.includes('连接中') || statusText.includes('已连接')) {
+                setStatus('⏹ 已停止', 'info');
+            }
+        }
+
+        // 事件绑定
+        startBtn.addEventListener('click', startStream);
+        stopBtn.addEventListener('click', stopStream);
+        clearBtn.addEventListener('click', clearOutput);
+
+        // Markdown 渲染切换（立即生效，不打断数据流）
+        renderToggle.addEventListener('change', () => {
+            renderMode = renderToggle.checked ? 'markdown' : 'text';
+            refreshOutput();
+        });
+
+        // 回车快捷键（在输入框中按回车触发开始）
+        urlInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !startBtn.disabled) {
+                startBtn.click();
+            }
+        });
+
+        // 初始状态
+        setStatus('就绪，点击“开始流式”', 'info');
+        stopBtn.disabled = true;
+</script>
+
+</body>
+</html>
